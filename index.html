@@ -240,7 +240,7 @@
       <div class="p-avatar-wrap">
         <img class="p-avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="" />
         <div class="status-dot" id="statusDot"></div>
-        <img class="device-icon-img" id="deviceIconImg" src="" alt="" style="display:none;width:16px;height:16px;object-fit:contain;position:absolute;bottom:0;right:0;border-radius:50%;border:2px solid rgba(15,15,20,0.95);" />
+        <img id="deviceIconImg" src="" alt="" style="display:none;width:12px;height:12px;object-fit:contain;position:absolute;bottom:0;right:0;" />
       </div>
       <div class="p-info">
         <div class="p-name-row">
@@ -354,7 +354,7 @@
 <script>
 // ── Crosshair cursor ──
 
-// ── Fake URL rotator (with 404.html reload fix) ──
+// ── Fake URL display (title trick — no history manipulation to avoid 404) ──
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const SUFFIX_CHARS = '~!@#$%';
 function randSlug() {
@@ -364,8 +364,12 @@ function randSlug() {
   const suf = SUFFIX_CHARS[Math.floor(Math.random() * SUFFIX_CHARS.length)];
   return s + suf + suf;
 }
-history.replaceState(null, '', '/' + randSlug());
-setInterval(() => history.replaceState(null, '', '/' + randSlug()), 2000);
+// Change the page title to show fake URL — visible in tab and when shared
+function rotateTitle() {
+  document.title = 'i6p6t.github.io/6p6t.lol/' + randSlug();
+}
+rotateTitle();
+setInterval(rotateTitle, 2000);
 
 // ── Views ──
 const vk = 'views_6p6t_v3';
