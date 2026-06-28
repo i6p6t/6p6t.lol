@@ -240,10 +240,11 @@
       <div class="p-avatar-wrap">
         <img class="p-avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="" />
         <div class="status-dot" id="statusDot"></div>
-        <div id="deviceIconImg" style="display:none;position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:rgba(15,15,20,0.95);display:none;align-items:center;justify-content:center;">
-          <svg id="mobileIconSvg" width="9" height="12" viewBox="0 0 9 12" fill="white">
-            <rect x="0.5" y="0.5" width="8" height="11" rx="1.5" fill="none" stroke="white" stroke-width="1"/>
-            <rect x="3" y="9" width="3" height="1" rx="0.5" fill="white"/>
+        <div id="deviceIconImg" style="display:none;position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;align-items:center;justify-content:center;background:rgba(15,15,20,0.9);border-radius:50%;border:1.5px solid rgba(15,15,20,0.95);">
+          <svg id="mobileIconSvg" width="10" height="13" viewBox="0 0 10 14" fill="#3ba55d" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="10" height="14" rx="2" />
+            <rect x="1.5" y="1.5" width="7" height="8.5" rx="0.5" fill="rgba(15,15,20,0.9)" />
+            <circle cx="5" cy="12" r="1.2" fill="rgba(15,15,20,0.9)" />
           </svg>
         </div>
       </div>
@@ -524,11 +525,8 @@ async function fetchPresence() {
     const mobileSvg = document.getElementById('mobileIconSvg');
     if (d.active_on_discord_mobile) {
       const col = STATUS_COLORS[status] || STATUS_COLORS.offline;
-      // color the phone SVG strokes/fills to match status
-      mobileSvg.querySelectorAll('rect, path').forEach(el => {
-        if (el.getAttribute('fill') === 'none') el.setAttribute('stroke', col);
-        else el.setAttribute('fill', col);
-      });
+      // only color the outer phone body (first rect), cutouts stay dark
+      mobileSvg.querySelector('rect:first-child').setAttribute('fill', col);
       deviceEl.style.display = 'flex';
       dot.style.display = 'none';
     } else {
