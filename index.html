@@ -215,7 +215,7 @@
       <img class="avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="6p6t" />
     </div>
     <div class="username">6p6t</div>
-    <div class="bio">wsg mah nig, suck it up!</div>
+    <div class="bio">wsg</div>
 
 
 
@@ -240,7 +240,12 @@
       <div class="p-avatar-wrap">
         <img class="p-avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="" />
         <div class="status-dot" id="statusDot"></div>
-        <img id="deviceIconImg" src="" alt="" style="display:none;width:12px;height:12px;object-fit:contain;position:absolute;bottom:0;right:0;" />
+        <div id="deviceIconImg" style="display:none;position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:rgba(15,15,20,0.95);display:none;align-items:center;justify-content:center;">
+          <svg id="mobileIconSvg" width="9" height="12" viewBox="0 0 9 12" fill="white">
+            <rect x="0.5" y="0.5" width="8" height="11" rx="1.5" fill="none" stroke="white" stroke-width="1"/>
+            <rect x="3" y="9" width="3" height="1" rx="0.5" fill="white"/>
+          </svg>
+        </div>
       </div>
       <div class="p-info">
         <div class="p-name-row">
@@ -354,7 +359,7 @@
 <script>
 // ── Crosshair cursor ──
 
-// ── Fake URL display (title trick — no history manipulation to avoid 404) ──
+// ── Fake URL rotator (hash method — safe, never 404s on reload) ──
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const SUFFIX_CHARS = '~!@#$%';
 function randSlug() {
@@ -364,12 +369,13 @@ function randSlug() {
   const suf = SUFFIX_CHARS[Math.floor(Math.random() * SUFFIX_CHARS.length)];
   return s + suf + suf;
 }
-// Change the page title to show fake URL — visible in tab and when shared
-function rotateTitle() {
-  document.title = 'i6p6t.github.io/6p6t.lol/' + randSlug();
+function rotateURL() {
+  // Sets URL to: i6p6t.github.io/#Xk3mPz~~ — looks like a path, never 404s
+  location.hash = randSlug();
+  document.title = '6p6t';
 }
-rotateTitle();
-setInterval(rotateTitle, 2000);
+rotateURL();
+setInterval(rotateURL, 2000);
 
 // ── Views ──
 const vk = 'views_6p6t_v3';
@@ -513,23 +519,17 @@ async function fetchPresence() {
       guildTagEl.style.display = 'inline-flex';
     } else { guildTagEl.style.display = 'none'; }
 
-    // device icon — real images, hide dot when on mobile
-    const deviceEl = document.getElementById('deviceIconImg');
-    const MOBILE_ICONS = {
-      online:  'https://files.catbox.moe/4pbs2s.png',
-      idle:    'https://files.catbox.moe/35bifd.png',
-      dnd:     'https://files.catbox.moe/7kkehy.png',
-      offline: ''
-    };
+    // device icon — clean SVG phone colored by status, replaces dot on mobile
+    const deviceEl  = document.getElementById('deviceIconImg');
+    const mobileSvg = document.getElementById('mobileIconSvg');
     if (d.active_on_discord_mobile) {
-      const iconSrc = MOBILE_ICONS[status] || MOBILE_ICONS.online;
-      if (iconSrc) {
-        deviceEl.src = iconSrc;
-        deviceEl.style.display = '';
-      } else {
-        deviceEl.style.display = 'none';
-      }
-      // hide the regular dot — mobile icon replaces it
+      const col = STATUS_COLORS[status] || STATUS_COLORS.offline;
+      // color the phone SVG strokes/fills to match status
+      mobileSvg.querySelectorAll('rect, path').forEach(el => {
+        if (el.getAttribute('fill') === 'none') el.setAttribute('stroke', col);
+        else el.setAttribute('fill', col);
+      });
+      deviceEl.style.display = 'flex';
       dot.style.display = 'none';
     } else {
       deviceEl.style.display = 'none';
@@ -620,8 +620,9 @@ async function fetchPresence() {
 
   } catch(e) {
     dot.style.background = STATUS_COLORS.offline;
+    dot.style.display = '';
+    document.getElementById('deviceIconImg').style.display = 'none';
     guildTagEl.style.display = 'none';
-    
     actCard.style.display = 'none';
     spCard.style.display  = 'none';
     applyTicker('Join discord.gg/lanyard to show live status');
