@@ -244,6 +244,10 @@
       <div class="p-info">
         <div class="p-name-row">
           6p6t
+          <span class="guild-tag" id="guildTag" style="display:none">
+            <img class="guild-badge" id="guildBadge" src="" alt="" />
+            <span id="guildTagText"></span>
+          </span>
           <div class="p-badges">
             <div class="p-badge">
               <img src="https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png" alt="Nitro" />
@@ -258,11 +262,7 @@
               <span class="p-badge-tip">Server Booster</span>
             </div>
           </div>
-          <span class="guild-tag" id="guildTag" style="display:none">
-            <img class="guild-badge" id="guildBadge" src="" alt="" />
-            <span id="guildTagText"></span>
-          </span>
-          <span class="device-icon" id="deviceIcon"></span>
+          <img class="device-icon-img" id="deviceIcon" src="" alt="" style="display:none;width:16px;height:16px;object-fit:contain;" />
         </div>
         <div class="p-status-wrap">
           <span class="p-status" id="presenceStatus">Fetching...</span>
@@ -382,8 +382,8 @@ document.getElementById('viewCount').textContent = v;
 
 // ── Music player ──
 const tracks = [
-  { title: 'Mosaïque', artist: 'Ash', src: 'https://files.catbox.moe/c2zny9.mp3', cover: 'https://cdn.discordapp.com/attachments/1519303088463286372/1520559745113526482/IMG_8599.jpg' },
-  { title: 'Peaches (feat. Daniel Caesar & Giveon)', artist: 'Justin Bieber, Daniel Caesar, GIVĒON', src: 'https://files.catbox.moe/oimm4a.mp3', cover: 'https://cdn.discordapp.com/attachments/1519303088463286372/1520559745461915818/IMG_8598.jpg' },
+  { title: 'Mosaïque', artist: 'Ash', src: 'https://files.catbox.moe/c2zny9.mp3', cover: 'https://files.catbox.moe/q3lar2.jpeg' },
+  { title: 'Peaches (feat. Daniel Caesar & Giveon)', artist: 'Justin Bieber, Daniel Caesar, GIVĒON', src: 'https://files.catbox.moe/oimm4a.mp3', cover: 'https://files.catbox.moe/905k3r.jpeg' },
 ];
 const NOTE_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/></svg>`;
 const NOTE_SM  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/></svg>`;
@@ -488,7 +488,7 @@ const dot        = document.getElementById('statusDot');
 const guildTagEl = document.getElementById('guildTag');
 const guildBadge = document.getElementById('guildBadge');
 const guildText  = document.getElementById('guildTagText');
-const deviceIcon = document.getElementById('deviceIcon');
+
 const actCard    = document.getElementById('activityCard');
 const spCard     = document.getElementById('spotifyCard');
 const STATUS_COLORS = { online:'#3ba55d', idle:'#faa81a', dnd:'#ed4245', offline:'#747f8d' };
@@ -504,7 +504,6 @@ async function fetchPresence() {
 
     // status dot
     const status = d.discord_status || 'offline';
-    dot.style.background = STATUS_COLORS[status] || STATUS_COLORS.offline;
 
     // guild tag
     const pg = d.discord_user && d.discord_user.primary_guild;
@@ -517,11 +516,29 @@ async function fetchPresence() {
       guildTagEl.style.display = 'inline-flex';
     } else { guildTagEl.style.display = 'none'; }
 
-    // device icon
-    if (d.active_on_discord_mobile)  deviceIcon.textContent = '📱';
-    else if (d.active_on_discord_desktop) deviceIcon.textContent = '🖥️';
-    else if (d.active_on_discord_web) deviceIcon.textContent = '🌐';
-    else deviceIcon.textContent = '';
+    // device icon — real images, hide dot when on mobile
+    const deviceEl = document.getElementById('deviceIcon');
+    const MOBILE_ICONS = {
+      online:  'https://files.catbox.moe/4pbs2s.png',
+      idle:    'https://files.catbox.moe/35bifd.png',
+      dnd:     'https://files.catbox.moe/7kkehy.png',
+      offline: ''
+    };
+    if (d.active_on_discord_mobile) {
+      const iconSrc = MOBILE_ICONS[status] || MOBILE_ICONS.online;
+      if (iconSrc) {
+        deviceEl.src = iconSrc;
+        deviceEl.style.display = '';
+      } else {
+        deviceEl.style.display = 'none';
+      }
+      // hide the regular dot — mobile icon replaces it
+      dot.style.display = 'none';
+    } else {
+      deviceEl.style.display = 'none';
+      dot.style.display = '';
+      dot.style.background = STATUS_COLORS[status] || STATUS_COLORS.offline;
+    }
 
     // custom status text
     const customAct = (d.activities||[]).find(a=>a.type===4);
@@ -607,7 +624,7 @@ async function fetchPresence() {
   } catch(e) {
     dot.style.background = STATUS_COLORS.offline;
     guildTagEl.style.display = 'none';
-    deviceIcon.textContent = '';
+    
     actCard.style.display = 'none';
     spCard.style.display  = 'none';
     applyTicker('Join discord.gg/lanyard to show live status');
