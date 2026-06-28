@@ -240,13 +240,16 @@
       <div class="p-avatar-wrap">
         <img class="p-avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="" />
         <div class="status-dot" id="statusDot"></div>
-        <div id="deviceIconImg" style="display:none;position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;align-items:center;justify-content:center;background:rgba(15,15,20,0.9);border-radius:50%;border:1.5px solid rgba(15,15,20,0.95);">
-          <svg id="mobileIconSvg" width="10" height="13" viewBox="0 0 10 14" fill="#3ba55d" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="10" height="14" rx="2" />
-            <rect x="1.5" y="1.5" width="7" height="8.5" rx="0.5" fill="rgba(15,15,20,0.9)" />
-            <circle cx="5" cy="12" r="1.2" fill="rgba(15,15,20,0.9)" />
-          </svg>
-        </div>
+        <svg id="deviceIconImg" style="display:none;position:absolute;bottom:-2px;right:-2px;width:13px;height:16px;" viewBox="0 0 10 14" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <mask id="phonemask">
+              <rect x="0" y="0" width="10" height="14" rx="2" fill="white"/>
+              <rect x="1.5" y="1.5" width="7" height="8.5" rx="0.5" fill="black"/>
+              <circle cx="5" cy="12" r="1.2" fill="black"/>
+            </mask>
+          </defs>
+          <rect id="phonebody" x="0" y="0" width="10" height="14" rx="2" fill="#3ba55d" mask="url(#phonemask)"/>
+        </svg>
       </div>
       <div class="p-info">
         <div class="p-name-row">
@@ -521,13 +524,11 @@ async function fetchPresence() {
     } else { guildTagEl.style.display = 'none'; }
 
     // device icon — clean SVG phone colored by status, replaces dot on mobile
-    const deviceEl  = document.getElementById('deviceIconImg');
-    const mobileSvg = document.getElementById('mobileIconSvg');
+    const deviceEl = document.getElementById('deviceIconImg');
     if (d.active_on_discord_mobile) {
       const col = STATUS_COLORS[status] || STATUS_COLORS.offline;
-      // only color the outer phone body (first rect), cutouts stay dark
-      mobileSvg.querySelector('rect:first-child').setAttribute('fill', col);
-      deviceEl.style.display = 'flex';
+      document.getElementById('phonebody').setAttribute('fill', col);
+      deviceEl.style.display = '';
       dot.style.display = 'none';
     } else {
       deviceEl.style.display = 'none';
@@ -619,8 +620,7 @@ async function fetchPresence() {
   } catch(e) {
     dot.style.background = STATUS_COLORS.offline;
     dot.style.display = '';
-    document.getElementById('deviceIconImg').style.display = 'none';
-    guildTagEl.style.display = 'none';
+    document.getElementById('deviceIconImg').style.display = 'none';    guildTagEl.style.display = 'none';
     actCard.style.display = 'none';
     spCard.style.display  = 'none';
     applyTicker('Join discord.gg/lanyard to show live status');
