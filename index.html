@@ -215,7 +215,7 @@
       <img class="avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="6p6t" />
     </div>
     <div class="username">6p6t</div>
-    <div class="bio">wsg mah nig suck it up!</div>
+    <div class="bio">wsg mah nig, suck it up!</div>
 
 
 
@@ -240,6 +240,7 @@
       <div class="p-avatar-wrap">
         <img class="p-avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="" />
         <div class="status-dot" id="statusDot"></div>
+        <img class="device-icon-img" id="deviceIconImg" src="" alt="" style="display:none;width:16px;height:16px;object-fit:contain;position:absolute;bottom:0;right:0;border-radius:50%;border:2px solid rgba(15,15,20,0.95);" />
       </div>
       <div class="p-info">
         <div class="p-name-row">
@@ -262,7 +263,6 @@
               <span class="p-badge-tip">Server Booster</span>
             </div>
           </div>
-          <img class="device-icon-img" id="deviceIcon" src="" alt="" style="display:none;width:16px;height:16px;object-fit:contain;" />
         </div>
         <div class="p-status-wrap">
           <span class="p-status" id="presenceStatus">Fetching...</span>
@@ -353,11 +353,8 @@
 
 <script>
 // ── Crosshair cursor ──
-document.addEventListener('mousemove', e => {
-});
 
-// ── Fake URL rotator ──
-const BASE = 'https://i6p6t.github.io/6p6t.lol/';
+// ── Fake URL rotator (with 404.html reload fix) ──
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const SUFFIX_CHARS = '~!@#$%';
 function randSlug() {
@@ -367,12 +364,8 @@ function randSlug() {
   const suf = SUFFIX_CHARS[Math.floor(Math.random() * SUFFIX_CHARS.length)];
   return s + suf + suf;
 }
-function rotateURL() {
-  const slug = randSlug();
-  history.replaceState(null, '', '/' + slug);
-}
-rotateURL();
-setInterval(rotateURL, 2000);
+history.replaceState(null, '', '/' + randSlug());
+setInterval(() => history.replaceState(null, '', '/' + randSlug()), 2000);
 
 // ── Views ──
 const vk = 'views_6p6t_v3';
@@ -517,7 +510,7 @@ async function fetchPresence() {
     } else { guildTagEl.style.display = 'none'; }
 
     // device icon — real images, hide dot when on mobile
-    const deviceEl = document.getElementById('deviceIcon');
+    const deviceEl = document.getElementById('deviceIconImg');
     const MOBILE_ICONS = {
       online:  'https://files.catbox.moe/4pbs2s.png',
       idle:    'https://files.catbox.moe/35bifd.png',
