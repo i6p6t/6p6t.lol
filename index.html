@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>6p6t</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -47,7 +48,34 @@
     .avatar-wrap { width: 82px; height: 82px; margin: 0 auto 12px; }
     .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 2px solid rgba(255,255,255,0.15); }
 
-    .username { font-size: 23px; font-weight: 700; color: #fff; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .username { font-size: 23px; font-weight: 700; color: #fff; letter-spacing: -0.5px; margin-bottom: 6px; position: relative; display: inline-block; }
+
+    /* ── Animated username chars ── */
+    .username .char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: charIn 0.3s forwards;
+    }
+    @keyframes charIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Particles on username ── */
+    .username-wrap { position: relative; display: inline-block; margin-bottom: 6px; }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleDrift linear infinite;
+      opacity: 0;
+    }
+    @keyframes particleDrift {
+      0%   { opacity: 0; transform: translateY(0) scale(1); }
+      15%  { opacity: 0.8; }
+      85%  { opacity: 0.4; }
+      100% { opacity: 0; transform: translateY(-28px) scale(0.3); }
+    }
     .bio { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 12px; }
 
 
@@ -204,7 +232,7 @@
 <body>
 
 
-<video id="bg-video" src="https://files.catbox.moe/7b0axe.mp4" autoplay muted loop playsinline></video>
+<video id="bg-video" src="assets/bg.mp4" autoplay muted loop playsinline></video>
 <div class="bg-overlay"></div>
 
 <div class="page">
@@ -214,7 +242,9 @@
     <div class="avatar-wrap">
       <img class="avatar" src="https://cdn.discordapp.com/avatars/714428648777711656/f7897220b174fc89e58c85430412d871.png" alt="6p6t" />
     </div>
-    <div class="username">6p6t</div>
+    <div class="username-wrap" id="usernameWrap">
+      <div class="username" id="usernameEl"></div>
+    </div>
     <div class="bio">wsg</div>
 
 
@@ -268,7 +298,7 @@
               <span class="p-badge-tip">Early Supporter</span>
             </div>
             <div class="p-badge">
-              <img src="https://files.catbox.moe/n5thok.webp" alt="Booster" />
+              <img src="assets/booster.webp" alt="Booster" />
               <span class="p-badge-tip">Server Booster</span>
             </div>
           </div>
@@ -381,6 +411,42 @@ function rotateURL() {
 rotateURL();
 setInterval(rotateURL, 2000);
 
+// ── Animated username: @6p6t typed char by char, loops ──
+const USERNAME_SEQ = ['@', '6', 'p', '6', 't'];
+const COLORS = ['#7c5af0','#3a8ef6','#fff','#a78bfa','#60a5fa'];
+function animateUsername() {
+  const el = document.getElementById('usernameEl');
+  el.innerHTML = '';
+  USERNAME_SEQ.forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = ch;
+    span.style.animationDelay = (i * 0.12) + 's';
+    el.appendChild(span);
+  });
+}
+animateUsername();
+// re-run animation every 4 seconds
+setInterval(() => {
+  animateUsername();
+}, 4000);
+
+// ── Particles floating up from username ──
+function spawnParticle() {
+  const wrap = document.getElementById('usernameWrap');
+  const el   = document.getElementById('usernameEl');
+  const p    = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 4;
+  const x    = Math.random() * el.offsetWidth;
+  const dur  = 1.5 + Math.random() * 2;
+  const col  = COLORS[Math.floor(Math.random() * COLORS.length)];
+  p.style.cssText = `width:${size}px;height:${size}px;left:${x}px;bottom:0;background:${col};animation-duration:${dur}s;animation-delay:${Math.random()*0.5}s;`;
+  wrap.appendChild(p);
+  setTimeout(() => p.remove(), (dur + 0.5) * 1000);
+}
+setInterval(spawnParticle, 200);
+
 // ── Views ──
 const vk = 'views_6p6t_v3';
 let v = parseInt(localStorage.getItem(vk) || '0') + 1;
@@ -389,8 +455,8 @@ document.getElementById('viewCount').textContent = v;
 
 // ── Music player ──
 const tracks = [
-  { title: 'Mosaïque', artist: 'Ash', src: 'https://files.catbox.moe/c2zny9.mp3', cover: 'https://files.catbox.moe/q3lar2.jpeg' },
-  { title: 'Peaches (feat. Daniel Caesar & Giveon)', artist: 'Justin Bieber, Daniel Caesar, GIVĒON', src: 'https://files.catbox.moe/oimm4a.mp3', cover: 'https://files.catbox.moe/905k3r.jpeg' },
+  { title: 'Mosaïque', artist: 'Ash', src: 'assets/mosaique.mp3', cover: 'assets/mosaique.jpeg' },
+  { title: 'Peaches (feat. Daniel Caesar & Giveon)', artist: 'Justin Bieber, Daniel Caesar, GIVĒON', src: 'assets/peaches.mp3', cover: 'assets/peaches.jpeg' },
 ];
 const NOTE_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/></svg>`;
 const NOTE_SM  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/></svg>`;
@@ -552,15 +618,24 @@ async function fetchPresence() {
       document.querySelector('.ac-label').textContent = 'Playing a game';
       document.getElementById('acName').textContent = gameAct.name || '—';
 
-      // large art
-      const largeSrc = gameAct.assets?.large_image
-        ? (gameAct.assets.large_image.startsWith('mp:external/')
-            ? 'https://media.discordapp.net/external/' + gameAct.assets.large_image.replace('mp:external/','')
-            : `https://cdn.discordapp.com/app-assets/${gameAct.application_id}/${gameAct.assets.large_image}.png`)
-        : null;
+      // large art — try assets.large_image, fall back to app icon
       const largeEl = document.getElementById('acArtLarge');
-      if (largeSrc) largeEl.innerHTML = `<img src="${largeSrc}" alt="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;" onerror="this.parentElement.innerHTML='<svg width=28 height=28 viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'rgba(255,255,255,0.2)\\' stroke-width=\\'1.5\\'><rect x=\\'2\\' y=\\'7\\' width=\\'20\\' height=\\'13\\' rx=\\'3\\'/></svg>'" />`;
-      else largeEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><rect x="2" y="7" width="20" height="13" rx="3"/><path d="M8 11h2m-1-1v2M15 12h2"/></svg>`;
+      let largeSrc = null;
+      if (gameAct.assets?.large_image) {
+        if (gameAct.assets.large_image.startsWith('mp:external/')) {
+          largeSrc = 'https://media.discordapp.net/external/' + gameAct.assets.large_image.replace('mp:external/','');
+        } else {
+          largeSrc = `https://cdn.discordapp.com/app-assets/${gameAct.application_id}/${gameAct.assets.large_image}.png`;
+        }
+      } else if (gameAct.application_id) {
+        // fallback: Discord app icon
+        largeSrc = `https://cdn.discordapp.com/app-icons/${gameAct.application_id}/icon.png`;
+      }
+      if (largeSrc) {
+        largeEl.innerHTML = `<img src="${largeSrc}" alt="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;" onerror="this.src='https://cdn.discordapp.com/app-icons/${gameAct.application_id}/icon.png'; this.onerror=null;" />`;
+      } else {
+        largeEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><rect x="2" y="7" width="20" height="13" rx="3"/><path d="M8 11h2m-1-1v2M15 12h2"/></svg>`;
+      }
 
       // small art
       const smallSrc = gameAct.assets?.small_image
