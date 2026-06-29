@@ -404,15 +404,46 @@ function randSlug() {
   return s + suf + suf;
 }
 function rotateURL() {
-  // Sets URL to: i6p6t.github.io/#Xk3mPz~~ — looks like a path, never 404s
   location.hash = randSlug();
-  document.title = '6p6t';
 }
 rotateURL();
 setInterval(rotateURL, 2000);
 
-// ── Animated username: @6p6t typed char by char, loops ──
-const USERNAME_SEQ = ['@', '6', 'p', '6', 't'];
+// ── Animated tab title: types @6p6t char by char then clears and repeats ──
+(function() {
+  const FULL   = '@6p6t';
+  const DELAY  = 160;   // ms per character typed
+  const HOLD   = 1800;  // ms to hold full text
+  const CLEAR  = 80;    // ms per character deleted
+  const PAUSE  = 600;   // ms pause before retyping
+  let idx = 0, deleting = false;
+
+  function tick() {
+    if (!deleting) {
+      idx++;
+      document.title = FULL.slice(0, idx);
+      if (idx === FULL.length) {
+        deleting = true;
+        setTimeout(tick, HOLD);
+      } else {
+        setTimeout(tick, DELAY);
+      }
+    } else {
+      idx--;
+      document.title = FULL.slice(0, idx);
+      if (idx === 0) {
+        deleting = false;
+        setTimeout(tick, PAUSE);
+      } else {
+        setTimeout(tick, CLEAR);
+      }
+    }
+  }
+  tick();
+})();
+
+// ── Animated username: 6p6t chars fade+rise slowly, loops ──
+const USERNAME_SEQ = ['6', 'p', '6', 't'];
 const COLORS = ['#7c5af0','#3a8ef6','#fff','#a78bfa','#60a5fa'];
 function animateUsername() {
   const el = document.getElementById('usernameEl');
@@ -421,15 +452,38 @@ function animateUsername() {
     const span = document.createElement('span');
     span.className = 'char';
     span.textContent = ch;
-    span.style.animationDelay = (i * 0.12) + 's';
+    span.style.animationDelay = (i * 0.2) + 's';
+    span.style.animationDuration = '0.6s';
     el.appendChild(span);
   });
 }
 animateUsername();
-// re-run animation every 4 seconds
-setInterval(() => {
-  animateUsername();
-}, 4000);
+setInterval(animateUsername, 5000);
+
+// ── Autoplay: play music on first user interaction ──
+let autoplayed = false;
+function tryAutoplay() {
+  if (autoplayed) return;
+  autoplayed = true;
+  loadTrack(0, true);
+  document.removeEventListener('click',     tryAutoplay);
+  document.removeEventListener('touchstart', tryAutoplay);
+  document.removeEventListener('keydown',   tryAutoplay);
+}
+// Try silent autoplay first (works on some browsers)
+audio.src = tracks[0].src;
+audio.volume = 1;
+audio.play().then(() => {
+  autoplayed = true;
+  loadTrack(0, true);
+}).catch(() => {
+  // Blocked — wait for first interaction
+  document.addEventListener('click',      tryAutoplay, { once: true });
+  document.addEventListener('touchstart', tryAutoplay, { once: true });
+  document.addEventListener('keydown',    tryAutoplay, { once: true });
+});
+
+
 
 // ── Particles floating up from username ──
 function spawnParticle() {
@@ -618,34 +672,65 @@ async function fetchPresence() {
       document.querySelector('.ac-label').textContent = 'Playing a game';
       document.getElementById('acName').textContent = gameAct.name || '—';
 
-      // large art — try assets.large_image, fall back to app icon
+      // large art — multi-source fallback, handles Roblox (no assets) and other games
       const largeEl = document.getElementById('acArtLarge');
-      let largeSrc = null;
-      if (gameAct.assets?.large_image) {
-        if (gameAct.assets.large_image.startsWith('mp:external/')) {
-          largeSrc = 'https://media.discordapp.net/external/' + gameAct.assets.large_image.replace('mp:external/','');
-        } else {
-          largeSrc = `https://cdn.discordapp.com/app-assets/${gameAct.application_id}/${gameAct.assets.large_image}.png`;
+      const appId   = gameAct.application_id;
+
+      // Known app icon overrides for games that have no assets in Lanyard
+      const APP_ICON_OVERRIDES = {
+        '363445589247131668': 'https://www.roblox.com/favicon.ico', // Roblox
+      };
+
+      function tryImages(urls, el, fallbackHtml) {
+        const remaining = [...urls].filter(Boolean);
+        function attempt() {
+          if (!remaining.length) { el.innerHTML = fallbackHtml; return; }
+          const src = remaining.shift();
+          const img = new Image();
+          img.onload = () => {
+            el.innerHTML = `<img src="${src}" alt="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;" />`;
+          };
+          img.onerror = attempt;
+          img.src = src;
         }
-      } else if (gameAct.application_id) {
-        // fallback: Discord app icon
-        largeSrc = `https://cdn.discordapp.com/app-icons/${gameAct.application_id}/icon.png`;
-      }
-      if (largeSrc) {
-        largeEl.innerHTML = `<img src="${largeSrc}" alt="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;" onerror="this.src='https://cdn.discordapp.com/app-icons/${gameAct.application_id}/icon.png'; this.onerror=null;" />`;
-      } else {
-        largeEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><rect x="2" y="7" width="20" height="13" rx="3"/><path d="M8 11h2m-1-1v2M15 12h2"/></svg>`;
+        attempt();
       }
 
+      const candidateLarge = [];
+      if (gameAct.assets?.large_image) {
+        const li = gameAct.assets.large_image;
+        if (li.startsWith('mp:external/')) {
+          candidateLarge.push('https://media.discordapp.net/external/' + li.replace('mp:external/', ''));
+        } else {
+          candidateLarge.push(`https://cdn.discordapp.com/app-assets/${appId}/${li}.png`);
+          candidateLarge.push(`https://cdn.discordapp.com/app-assets/${appId}/${li}.webp`);
+        }
+      }
+      // dstn.to proxy — works for most apps including ones without assets
+      if (appId) {
+        candidateLarge.push(`https://dcdn.dstn.to/app-icons/${appId}`);
+        candidateLarge.push(APP_ICON_OVERRIDES[appId] || null);
+      }
+
+      const fallbackSvg = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><rect x="2" y="7" width="20" height="13" rx="3"/><path d="M8 11h2m-1-1v2M15 12h2"/></svg>`;
+      tryImages(candidateLarge, largeEl, fallbackSvg);
+
       // small art
-      const smallSrc = gameAct.assets?.small_image
-        ? (gameAct.assets.small_image.startsWith('mp:external/')
-            ? 'https://media.discordapp.net/external/' + gameAct.assets.small_image.replace('mp:external/','')
-            : `https://cdn.discordapp.com/app-assets/${gameAct.application_id}/${gameAct.assets.small_image}.png`)
-        : null;
       const smallWrap = document.getElementById('acArtSmall');
-      if (smallSrc) { document.getElementById('acSmallImg').src = smallSrc; smallWrap.style.display='flex'; }
-      else smallWrap.style.display='none';
+      const candidateSmall = [];
+      if (gameAct.assets?.small_image) {
+        const si = gameAct.assets.small_image;
+        if (si.startsWith('mp:external/')) {
+          candidateSmall.push('https://media.discordapp.net/external/' + si.replace('mp:external/', ''));
+        } else {
+          candidateSmall.push(`https://cdn.discordapp.com/app-assets/${appId}/${si}.png`);
+          candidateSmall.push(`https://cdn.discordapp.com/app-assets/${appId}/${si}.webp`);
+        }
+        smallWrap.style.display = 'flex';
+        tryImages(candidateSmall, smallWrap, '');
+      } else {
+        smallWrap.style.display = 'none';
+      }
 
       // details
       const detEl = document.getElementById('acDetail');
